@@ -1089,6 +1089,7 @@ class GranolaSyncPlugin extends obsidian.Plugin {
 				`${day}.${month}.${year}`, // DD.MM.YYYY
 				`${year}/${month}/${day}`, // YYYY/MM/DD
 				`${day}/${month}/${year}`, // DD/MM/YYYY
+				`${year}${month}${day}`    // YYYYMMDD
 			];
 			
 			// Search through all files in the vault to find today's daily note
@@ -1096,7 +1097,7 @@ class GranolaSyncPlugin extends obsidian.Plugin {
 			
 			for (const file of files) {
 				// Check if this file is in the daily notes structure and matches any of today's date formats
-				if (file.path.includes('Daily')) {
+				if (file.path.includes('calendar')) {
 					for (const dateFormat of searchFormats) {
 						if (file.path.includes(dateFormat)) {
 							return file;
