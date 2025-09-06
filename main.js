@@ -21,6 +21,7 @@ const DEFAULT_SETTINGS = {
 	dateFormat: 'YYYY-MM-DD',
 	autoSyncFrequency: 300000,
 	enableDailyNoteIntegration: false,
+	dailyNoteFolder: 'calendar',
 	dailyNoteSectionName: '## Granola Meetings',
 	enablePeriodicNoteIntegration: false,
 	periodicNoteSectionName: '## Granola Meetings',
@@ -1168,21 +1169,27 @@ class GranolaSyncPlugin extends obsidian.Plugin {
 				`${day}.${month}.${year}`, // DD.MM.YYYY
 				`${year}/${month}/${day}`, // YYYY/MM/DD
 				`${day}/${month}/${year}`, // DD/MM/YYYY
+				`${year}${month}${day}`    // YYYYMMDD
+
 			];
+
+			// Normalise folder path (allow user to enter /calendar or calendar/)
+            const folderPath = (this.settings.dailyNoteFolder || 'calendar').replace(/^\/+|\/+$/g, '');
+
 			
 			// Search through all files in the vault to find today's daily note
 			const files = this.app.vault.getMarkdownFiles();
 			
 			for (const file of files) {
-				// Check if this file is in the daily notes structure and matches any of today's date formats
-				if (file.path.includes('Daily')) {
+				// Must be directly inside the daily note folder (no subfolders), and matches any of today's date formats
+				if (file.parent.path === folderPath) {
 					for (const dateFormat of searchFormats) {
 						if (file.path.includes(dateFormat)) {
 							return file;
 						}
 					}
 				}
-			}
+			}	
 			
 			return null;
 		} catch (error) {
@@ -1570,7 +1577,19 @@ class GranolaSyncSettingTab extends obsidian.PluginSettingTab {
 					await this.plugin.saveSettings();
 				});
 			});
-
+		
+			new obsidian.Setting(containerEl)
+			.setName('Daily note folder location')
+			.setDesc('The name of the folder where your daily notes are stored, if any. Default is "calendar".')
+			.addText(text => {
+				text.setPlaceholder('calendar');
+				text.setValue(this.plugin.settings.dailyNoteFolder);
+				text.onChange(async (value) => {
+					this.plugin.settings.dailyNoteFolder = value;
+					await this.plugin.saveSettings();
+				});
+			});
+			
 		new obsidian.Setting(containerEl)
 			.setName('Auto-sync frequency')
 			.setDesc('How often to automatically sync notes')
